@@ -5,14 +5,16 @@
 use std::ops::{Add, Mul, Neg, Sub, Div};
 use std::fmt;
 
+#[derive(Clone, Copy)]
 pub struct ExpComplex {
-    arg: f64,
-    module: f64,
+    pub arg: f64,
+    pub module: f64,
 }
 
+#[derive(Clone, Copy)]
 pub struct NumComplex {
-    real: f64,
-    imag: f64,
+    pub real: f64,
+    pub imag: f64,
 }
 
 pub trait Complex {}
@@ -20,6 +22,19 @@ pub trait Complex {}
 impl Complex for NumComplex{}
 impl Complex for ExpComplex{}
 
+///Explicit casting for all std numeric types
+///Returns a ExpComplex
+///
+///#Examples
+///```
+/// extern crate easy_complex;
+/// use easy_complex::ContainedInComplex;
+///
+/// let _complex = 1.complex();
+///
+/// let i = 2;
+/// _complex = i.complex();
+///```
 pub trait ContainedInComplex {
     fn complex(&self) -> ExpComplex;
 }
@@ -146,17 +161,6 @@ impl NumComplex {
     }
 }
 
-///Explicit casting for all std numeric types
-///Returns a ExpComplex
-///
-///#Examples
-///```
-/// let _complex = 1.complex();
-///
-/// let i = 2;
-/// _complex = i.complex();
-///```
-
 impl ContainedInComplex for u8 {
     fn complex(&self) -> ExpComplex {
         ExpComplex {module: (*self as f64), arg: 0.0}
@@ -221,10 +225,13 @@ impl ContainedInComplex for f64 {
 ///
 ///#Examples
 ///```
+/// extern crate easy_complex;
+/// use easy_complex::{ExpComplex, NumComplex, ContainedInComplex};
+///
 /// let exp = 1.complex();
-/// println!(exp);
+/// println!("{}", exp);
 /// //Prints in exponential form --> 1.0 · exp(0.0j)
-/// println!(NumComplex::new_from(exp));
+/// println!("{}", NumComplex::new_from(exp));
 /// //Prints in coordinates --> 1.0 + 0.0j
 ///```
 impl fmt::Display for ExpComplex {
@@ -235,7 +242,7 @@ impl fmt::Display for ExpComplex {
 
 impl fmt::Display for NumComplex {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{} {} {}j", self.real, if self.imag > 0.0 {"+"} else {"-"}, self.imag)
+        write!(f, "{} {} {}j", self.real, if self.imag > 0.0 {"+"} else {""}, self.imag)
     }
 }
 
