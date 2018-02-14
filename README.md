@@ -1,6 +1,6 @@
 # easy-complex
 [![Github build](https://img.shields.io/badge/build-passing-brightgreen.svg)]()
-[![GitHub package version](https://img.shields.io/badge/version-0.3.0-orange.svg)]()
+[![GitHub package version](https://img.shields.io/badge/crates.io-0.3.1-orange.svg)](https://crates.io/crates/easy_complex)
 [![Github license](https://img.shields.io/badge/license-apache-blue.svg)](https://github.com/spcan/easy-complex/blob/master/LICENSE)
 
 easy-complex is a no-dependencies crate that provides easy to use complex number operations and provides an explicit cast for all numeric types in the standard library.
@@ -18,11 +18,11 @@ Just add to your ```Cargo.toml```
 
 ```
 [dependencies]
-easy_complex = "0.3.0"
+easy_complex = "0.3.1"
 ```
 If you don't use or want to use cargo, the crate can be found in this [crates.io](https://crates.io/crates/easy_complex) page
 
-Versions before 0.3.0 have some errors, misspells and/or overcomplicated ways, their use is not recommended.
+Versions before 0.3.1 have some errors, misspells and/or overcomplicated ways, their use is not recommended.
 
 
 ## Usage
