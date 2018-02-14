@@ -685,8 +685,8 @@ impl Mul<NumComplex> for ExpComplex {
     type Output = ExpComplex;
 
     fn mul(self, other: NumComplex) -> ExpComplex {
-        let othermod = (other.real*other.real + other.imag*other.imag).sqrt();
-        let otherarg = (other.real / othermod).acos();
+        let othermod = other.module();
+        let otherarg = other.module();
         ExpComplex {module: self.module * othermod, arg: self.arg + otherarg}
     }
 }
@@ -695,8 +695,8 @@ impl<'a, 'b> Mul<&'b NumComplex> for &'a ExpComplex {
     type Output = ExpComplex;
 
     fn mul(self, other: &'b NumComplex) -> ExpComplex {
-        let othermod = (other.real*other.real + other.imag*other.imag).sqrt();
-        let otherarg = (other.real / othermod).acos();
+        let othermod = other.module();
+        let otherarg = other.module();
         ExpComplex {module: self.module * othermod, arg: self.arg + otherarg}
     }
 }
@@ -723,8 +723,8 @@ impl Mul<ExpComplex> for NumComplex {
     type Output = NumComplex;
 
     fn mul(self, other: ExpComplex) -> NumComplex {
-        NumComplex {real: self.real*other.module*other.arg.cos() - self.imag*other.module*other.arg.sin(),
-                    imag: self.real*other.module*other.arg.sin() + self.imag*other.module*other.arg.cos()}
+        NumComplex {real: self.real*other.real() - self.imag*other.imag(),
+                    imag: self.real*other.imag() + self.imag*other.real()}
     }
 }
 
@@ -732,8 +732,8 @@ impl<'a, 'b> Mul<&'b ExpComplex> for &'a NumComplex {
     type Output = NumComplex;
 
     fn mul(self, other: &'b ExpComplex) -> NumComplex {
-        NumComplex {real: self.real*other.module*other.arg.cos() - self.imag*other.module*other.arg.sin(),
-                    imag: self.real*other.module*other.arg.sin() + self.imag*other.module*other.arg.cos()}
+        NumComplex {real: self.real*other.real() - self.imag*other.imag(),
+                    imag: self.real*other.imag() + self.imag*other.real()}
     }
 }
 
@@ -757,8 +757,8 @@ impl Div<NumComplex> for ExpComplex {
     type Output = ExpComplex;
 
     fn div(self, other: NumComplex) -> ExpComplex {
-        let othermod = (other.real*other.real + other.imag*other.imag).sqrt();
-        let otherarg = (other.real / othermod).acos();
+        let othermod = other.module();
+        let otherarg = other.arg();
         ExpComplex {module: self.module/othermod, arg: self.arg - otherarg}
     }
 }
@@ -767,8 +767,8 @@ impl<'a, 'b> Div<&'b NumComplex> for &'a ExpComplex {
     type Output = ExpComplex;
 
     fn div(self, other: &'b NumComplex) -> ExpComplex {
-        let othermod = (other.real*other.real + other.imag*other.imag).sqrt();
-        let otherarg = (other.real / othermod).acos();
+        let othermod = other.module();
+        let otherarg = other.arg();
         ExpComplex {module: self.module/othermod, arg: self.arg - otherarg}
     }
 }
