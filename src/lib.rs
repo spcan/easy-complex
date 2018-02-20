@@ -60,6 +60,14 @@ impl ExpComplex {
         self.module*self.arg.sin()
     }
 
+    pub fn d_arg(&self) -> f64 {
+    	self.arg*360.0/(2.0*pi())
+    }
+
+    pub fn reduce_arg(&mut self) {
+    	self.arg = self.arg.cos().acos();
+    }
+
     pub fn sqrt(&self) -> Result<Vec<ExpComplex>, &'static str> {
         self.root(2)
     }
@@ -123,11 +131,19 @@ impl ExpComplex {
     }
 
     pub fn sinh(&self) -> ExpComplex {
-        ExpComplex::new_from(
-            NumComplex {real: self.real().sinh()*self.imag().cos(),
-                        imag: self.real().cosh()*self.imag().sin()}
-        )
-    }
+		ExpComplex::new_from(
+			NumComplex {real: self.real().sinh()*self.imag().cos(),
+						imag: self.real().cosh()*self.imag().sin()}
+		)
+	}
+
+	pub fn tuple(&self) -> (f64, f64) {
+		(self.module, self.arg)
+	}
+
+	pub fn coord_tuple(&self) -> (f64, f64) {
+		(self.real(), self.imag())
+	}
 }
 
 impl NumComplex {
@@ -149,6 +165,10 @@ impl NumComplex {
         } else {
             0.0
         }
+    }
+
+    pub fn d_arg(&self) -> f64 {
+    	self.arg()*360.0/(2.0*pi())
     }
 
     pub fn sqrt(&self) -> Result<Vec<ExpComplex>, &'static str> {
@@ -213,6 +233,14 @@ impl NumComplex {
         NumComplex {real: self.real.sinh()*self.imag.cos(),
                     imag: self.real.cosh()*self.imag.sin()}
     }
+
+	pub fn tuple(&self) -> (f64, f64) {
+		(self.real, self.imag)
+	}
+
+	pub fn exp_tuple(&self) -> (f64, f64) {
+		(self.module(), self.arg())
+	}
 }
 
 impl ContainedInComplex for u8 {
