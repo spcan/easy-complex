@@ -5,6 +5,10 @@
 
 easy-complex is a no-dependencies crate that provides easy to use complex number operations and provides an explicit cast for all numeric types in the standard library.
 
+[Github repo](https://github.com/spcan/easy-complex)
+
+[crates.io page](https://crates.io/crates/easy_complex)
+
 ## Features
 
   - Explicit cast from integers, unsigned integers and floats to Exponential Complex Number (ExpComplex).
@@ -18,7 +22,7 @@ Just add to your ```Cargo.toml```
 
 ```
 [dependencies]
-easy_complex = "0.3.1"
+easy_complex = "0.3.2"
 ```
 If you don't use or want to use cargo, the crate can be found in this [crates.io](https://crates.io/crates/easy_complex) page
 
@@ -43,7 +47,7 @@ use easy_complex::ContainedInComplex;
  >Warning!!! Values near zero may diverge in the argument if used in ExpComplex form
 
 ## TODO
- - Implement destructuring for the complex numbers as well as assigning from tuples
+ - ~~Implement destructuring for the complex numbers as well as assigning from tuples~~
  - Some advanced functions on the complex domain (**C**)
  - Clean up and more extensive documentation
 
