@@ -1,6 +1,6 @@
 # easy-complex
 [![Github build](https://img.shields.io/badge/build-passing-brightgreen.svg)]()
-[![GitHub package version](https://img.shields.io/badge/crates.io-0.3.1-orange.svg)](https://crates.io/crates/easy_complex)
+[![GitHub package version](https://img.shields.io/badge/crates.io-0.3.3-orange.svg)](https://crates.io/crates/easy_complex)
 [![Github license](https://img.shields.io/badge/license-apache-blue.svg)](https://github.com/spcan/easy-complex/blob/master/LICENSE)
 
 easy-complex is a no-dependencies crate that provides easy to use complex number operations and provides an explicit cast for all numeric types in the standard library.
@@ -15,6 +15,7 @@ easy-complex is a no-dependencies crate that provides easy to use complex number
   - Easy operations with overloaded standard operators.
   - Automatic conversion to the leftmost type of complex in operations.
   - A custom Display trait implementation that prints in either exponential form or coordinate form.
+  - Compatibility with the num-traits crate through the feature "num_complex\_compatibility".
 
 ## Installation
 easy complex doesn't have any dependencies except the standard library.
@@ -22,7 +23,7 @@ Just add to your ```Cargo.toml```
 
 ```
 [dependencies]
-easy_complex = "0.3.2"
+easy_complex = "0.3.3"
 ```
 If you don't use or want to use cargo, the crate can be found in this [crates.io](https://crates.io/crates/easy_complex) page
 
@@ -30,7 +31,7 @@ Versions before 0.3.1 have some errors, misspells and/or overcomplicated ways, t
 
 
 ## Usage
-For extensive explanation go to the [wiki](https://github.com/spcan/easy-complex/wiki)
+For extensive explanation and usage go to the [wiki](https://github.com/spcan/easy-complex/wiki)
 
 To use the complex numbers do
 ```
@@ -47,10 +48,11 @@ use easy_complex::ContainedInComplex;
  >Warning!!! Values near zero may diverge in the argument if used in ExpComplex form
 
 ## TODO
- - ~~Implement destructuring for the complex numbers as well as assigning from tuples~~
+ - Extend compatibility
  - Some advanced functions on the complex domain (**C**)
  - Clean up and more extensive documentation
 
 ## LICENSE
 Apache License 2.0
+
 

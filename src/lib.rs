@@ -5,6 +5,16 @@
 use std::ops::{Add, Mul, Neg, Sub, Div};
 use std::fmt;
 
+
+#[cfg(feature="nightly")]
+use std::num::{Zero, One};
+
+#[cfg(feature="num_complex_compatible")]
+extern crate num_complex;
+
+#[cfg(feature="num_complex_compatible")]
+use num_complex::Complex64;
+
 #[derive(Clone, Copy)]
 pub struct ExpComplex {
     pub arg: f64,
@@ -22,19 +32,7 @@ pub trait Complex {}
 impl Complex for NumComplex{}
 impl Complex for ExpComplex{}
 
-///Explicit casting for all std numeric types
-///Returns a ExpComplex
-///
-///#Examples
-///```
-/// extern crate easy_complex;
-/// use easy_complex::ContainedInComplex;
-///
-/// let _complex = 1.complex();
-///
-/// let i = 2;
-/// _complex = i.complex();
-///```
+
 pub trait ContainedInComplex {
     fn complex(&self) -> ExpComplex;
 }
@@ -48,7 +46,7 @@ impl ExpComplex {
         ExpComplex {module: 0.0, arg: 0.0}
     }
 
-    pub fn new_from(f: NumComplex) -> ExpComplex {
+    pub fn new_from(f: &NumComplex) -> ExpComplex {
         ExpComplex {module: f.module(), arg: f.arg()}
     }
 
@@ -88,9 +86,14 @@ impl ExpComplex {
         Ok(out)
     }
 
-    pub fn pow(&self, p: usize) -> ExpComplex {
+    pub fn powi(&self, p: isize) -> ExpComplex {
         ExpComplex {module: self.module.powi(p as i32),
                     arg: self.arg*(p as f64)}
+    }
+
+    pub fn powf(&self, p: f64) -> ExpComplex {
+        ExpComplex {module: self.module.powf(p),
+                    arg: self.arg*p}
     }
 
     pub fn conjugate(&self) -> ExpComplex {
@@ -101,8 +104,18 @@ impl ExpComplex {
         self.module
     }
 
+    pub fn exp(&self) -> ExpComplex {
+        ExpComplex {module: self.module*self.arg.cos(), arg: self.module*self.arg.sin()}
+    }
+
     pub fn ln(&self) -> ExpComplex {
-        ExpComplex::new_from(NumComplex {real: self.module.ln(), imag: self.arg})
+        ExpComplex::new_from(&NumComplex {real: self.module.ln(), imag: self.arg})
+    }
+
+    pub fn log(&self, base: f64) -> ExpComplex {
+        ExpComplex::new_from(
+            &NumComplex {real: self.module.log(base),
+                        imag: self.arg / base.ln()})
     }
 
     pub fn inverse(&self) -> ExpComplex {
@@ -111,28 +124,37 @@ impl ExpComplex {
 
     pub fn cos(&self) -> ExpComplex {
         ExpComplex::new_from(
-            NumComplex {real:  self.real().cos()*self.imag().cosh(),
+            &NumComplex {real:  self.real().cos()*self.imag().cosh(),
                         imag: -self.real().sin()*self.imag().sinh()}
         )
     }
 
     pub fn sin(&self) -> ExpComplex {
         ExpComplex::new_from(
-            NumComplex {real: self.real().sin()*self.imag().cosh(),
+            &NumComplex {real: self.real().sin()*self.imag().cosh(),
                         imag: self.real().cos()*self.imag().sinh()}
         )
     }
 
+    pub fn tan(&self) -> Option<ExpComplex> {
+        let cosine = self.cos();
+        if cosine.module != 0.0 {
+            Some(self.sin()/cosine)
+        } else {
+            None
+        }
+    }
+
     pub fn cosh(&self) -> ExpComplex {
         ExpComplex::new_from(
-            NumComplex {real: self.real().cosh()*self.imag().cos(),
+            &NumComplex {real: self.real().cosh()*self.imag().cos(),
                         imag: self.real().sinh()*self.imag().sin()}
         )
     }
 
     pub fn sinh(&self) -> ExpComplex {
 		ExpComplex::new_from(
-			NumComplex {real: self.real().sinh()*self.imag().cos(),
+			&NumComplex {real: self.real().sinh()*self.imag().cos(),
 						imag: self.real().cosh()*self.imag().sin()}
 		)
 	}
@@ -151,7 +173,7 @@ impl NumComplex {
         NumComplex {real: 0.0, imag: 0.0}
     }
 
-    pub fn new_from(f: ExpComplex) -> NumComplex {
+    pub fn new_from(f: &ExpComplex) -> NumComplex {
         NumComplex {real: f.real(), imag: f.imag()}
     }
 
@@ -191,9 +213,14 @@ impl NumComplex {
         Ok(out)
     }
 
-    pub fn pow(&self, p: usize) -> NumComplex {
+    pub fn powi(&self, p: isize) -> NumComplex {
         NumComplex {real: self.module().powi(p as i32)*(((p as f64)*self.arg()).cos()),
                     imag: self.module().powi(p as i32)*(((p as f64)*self.arg()).sin())}
+    }
+
+    pub fn powf(&self, p: f64) -> NumComplex {
+        NumComplex {real: self.module().powf(p)*((p*self.arg()).cos()),
+                    imag: self.module().powf(p)*((p*self.arg()).sin())}
     }
 
     pub fn conjugate(&self) -> NumComplex {
@@ -204,11 +231,20 @@ impl NumComplex {
         self.module()
     }
 
+    pub fn exp(&self) -> NumComplex {
+        NumComplex {real: self.imag.cos()*self.real.exp(), imag: self.imag.sin()*self.real.exp()}
+    }
+
     pub fn ln(&self) -> NumComplex{
         let othermod = (self.real*self.real + self.imag*self.imag).sqrt();
         let otherarg = (self.real / othermod).acos();
         NumComplex {real: othermod.ln(), imag: otherarg}
     }
+
+    pub fn log(&self, base: f64) -> NumComplex {
+        NumComplex {real: self.module().log(base), imag: self.arg() / base.ln()}
+    }
+
     pub fn inverse(&self) -> NumComplex {
         NumComplex {real:  self.real / (self.real*self.real + self.imag+self.imag),
                     imag: -self.imag / (self.real*self.real + self.imag*self.imag)}
@@ -222,6 +258,15 @@ impl NumComplex {
     pub fn sin(&self) -> NumComplex {
         NumComplex {real: self.real.sin()*self.imag.cosh(),
                     imag: self.real.cos()*self.imag.sinh()}
+    }
+
+    pub fn tan(&self) -> Option<NumComplex> {
+        let cosine = self.cos();
+        if cosine.real != 0.0 || cosine.imag != 0.0 {
+            Some(self.sin()/cosine)
+        } else {
+            None
+        }
     }
 
     pub fn cosh(&self) -> NumComplex {
@@ -303,7 +348,6 @@ impl ContainedInComplex for f64 {
     }
 }
 
-///Implementation of complex transformation of tuples of 2 numbers
 impl ContainedInComplex for (u8, u8) {
     fn complex(&self) -> ExpComplex {
         let newmodule = ((self.0*self.0 + self.1*self.1) as f64).sqrt();
@@ -444,7 +488,6 @@ impl ContainedInComplex for (f64, f64) {
     }
 }
 
-///Direct cast between the two types of complex
 impl From<ExpComplex> for NumComplex {
     fn from(num: ExpComplex) -> Self {
         NumComplex {real: num.real(), imag: num.imag()}
@@ -457,19 +500,34 @@ impl From<NumComplex> for ExpComplex {
     }
 }
 
-///Display of the numbers with a general computation style
-///
-///#Examples
-///```
-/// extern crate easy_complex;
-/// use easy_complex::{ExpComplex, NumComplex, ContainedInComplex};
-///
-/// let exp = 1.complex();
-/// println!("{}", exp);
-/// //Prints in exponential form --> 1.0 · exp(0.0j)
-/// println!("{}", NumComplex::new_from(exp));
-/// //Prints in coordinates --> 1.0 + 0.0j
-///```
+#[cfg(feature="num_complex_compatible")]
+impl From<Complex64> for ExpComplex {
+    fn from(num: Complex64) -> Self {
+        ExpComplex::new_from(&NumComplex {real: num.re, imag: num.im})
+    }
+}
+
+#[cfg(feature = "num_complex_compatible")]
+impl From<Complex64> for NumComplex {
+    fn from(num: Complex64) -> Self {
+        NumComplex {real: num.re, imag: num.im}
+    }
+}
+
+#[cfg(feature="num_complex_compatible")]
+impl From<ExpComplex> for Complex64 {
+    fn from(num: ExpComplex) -> Self {
+        Complex64::new(num.real(), num.imag())
+    }
+}
+
+#[cfg(feature="num_complex_compatible")]
+impl From<NumComplex> for Complex64 {
+    fn from(num: NumComplex) -> Self {
+        Complex64::new(num.real, num.imag)
+    }
+}
+
 impl fmt::Display for ExpComplex {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{} · exp({}j)", self.module, self.arg)
@@ -478,14 +536,9 @@ impl fmt::Display for ExpComplex {
 
 impl fmt::Display for NumComplex {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{} {} {}j", self.real, if self.imag > 0.0 {"+"} else {""}, self.imag)
+        write!(f, "{} {} {}j", self.real, if self.imag >= 0.0 {"+"} else {"-"}, self.imag)
     }
 }
-
-/// Euler's identity
-///
-/// Try calling:
-/// euler_id()
 pub fn euler_id() {
     let pi = (-1.0f64).acos();
     let exp_number = ExpComplex {module: 1.0, arg: pi};
@@ -499,6 +552,64 @@ impl PartialEq for ExpComplex {
         }
         false
     }
+
+    fn ne(&self, other: &ExpComplex) -> bool {
+        if self.module != other.module || self.arg.cos() != other.arg.cos() || self.arg.sin() != other.arg.sin() {
+            true
+        } else {
+            false
+        }
+    }
+}
+
+impl PartialEq for NumComplex {
+    fn eq(&self, other: &NumComplex) -> bool {
+        return self.real == other.real && self.imag == other.imag;
+    }
+
+    fn ne(&self, other: &NumComplex) -> bool {
+        return !(self.real == other.real && self.imag == other.imag);
+    }
+}
+
+#[cfg(feature="nightly")]
+impl Zero for ExpComplex {
+    #[inline]
+    fn zero() -> ExpComplex {
+        ExpComplex {module: 0.0f64, arg: 0.0f64}
+    }
+
+    fn is_zero(&self) -> bool {
+        self.module == 0.0
+    }
+}
+
+#[cfg(feature="nightly")]
+impl One for ExpComplex {
+    #[inline]
+    fn one() -> ExpComplex {
+        ExpComplex {module: 1.0f64, arg: 0.0f64}
+    }
+
+    fn is_zero(&self) -> bool {
+        return self.real == 0.0 && self.imag == 0.0
+    }
+}
+
+#[cfg(feature="nightly")]
+impl Zero for NumComplex {
+    #[inline]
+    fn zero() -> NumComplex {
+        NumComplex {real: 0.0f64, imag: 0.0f64}
+    }
+}
+
+#[cfg(feature="nightly")]
+impl One for NumComplex {
+    #[inline]
+    fn one() -> NumComplex {
+        NumComplex {real: 1.0f64, imag: 0.0f64}
+    }
 }
 
 impl Add<ExpComplex> for ExpComplex {
@@ -511,7 +622,7 @@ impl Add<ExpComplex> for ExpComplex {
         } else {
             0.0
         };
-    
+
        ExpComplex {module: newmodule, arg: newarg}
     }
 }
@@ -526,7 +637,7 @@ impl<'a, 'b> Add<&'b ExpComplex> for &'a ExpComplex {
         } else {
             0.0
         };
-    
+
        ExpComplex {module: newmodule, arg: newarg}
     }
 }
