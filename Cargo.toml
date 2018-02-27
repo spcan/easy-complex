@@ -9,7 +9,6 @@ readme = "README.md"
 repository = "https://github.com/spcan/easy-complex"
 
 [dependencies]
-num-complex = { version = "*", optional = true}
 
 [profile.dev]
 opt-level = 2
