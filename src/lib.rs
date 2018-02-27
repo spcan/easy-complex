@@ -113,9 +113,7 @@ impl ExpComplex {
     }
 
     pub fn log(&self, base: f64) -> ExpComplex {
-        ExpComplex::new_from(
-            &NumComplex {real: self.module.log(base),
-                        imag: self.arg / base.ln()})
+        self.ln() / base.ln().complex()
     }
 
     pub fn inverse(&self) -> ExpComplex {
@@ -242,7 +240,7 @@ impl NumComplex {
     }
 
     pub fn log(&self, base: f64) -> NumComplex {
-        NumComplex {real: self.module().log(base), imag: self.arg() / base.ln()}
+        self.ln() / base.ln().complex()
     }
 
     pub fn inverse(&self) -> NumComplex {
