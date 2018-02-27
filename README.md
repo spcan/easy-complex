@@ -49,6 +49,7 @@ use easy_complex::ContainedInComplex;
 
 ## TODO
  - Extend compatibility
+ - Add more examples and tests
  - Some advanced functions on the complex domain (**C**)
  - Clean up and more extensive documentation
 
