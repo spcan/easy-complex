@@ -9,11 +9,12 @@ easy-complex is a no-dependencies crate that provides easy to use complex number
 
 [crates.io page](https://crates.io/crates/easy_complex)
 
+If you have any issues, please report them [here](https://github.com/spcan/easy-complex/issues)
+
 ## Features
 
   - Explicit cast from integers, unsigned integers and floats to Exponential Complex Number (ExpComplex).
   - Easy operations with overloaded standard operators.
-  - Automatic conversion to the leftmost type of complex in operations.
   - A custom Display trait implementation that prints in either exponential form or coordinate form.
   - Compatibility with the num-traits crate through the feature "num_complex\_compatibility".
 
@@ -23,7 +24,7 @@ Just add to your ```Cargo.toml```
 
 ```
 [dependencies]
-easy_complex = "0.3.3"
+easy_complex = "0.3.4"
 ```
 If you don't use or want to use cargo, the crate can be found in this [crates.io](https://crates.io/crates/easy_complex) page
 
@@ -31,11 +32,11 @@ Versions before 0.3.1 have some errors, misspells and/or overcomplicated ways, t
 
 
 ## Usage
-For extensive explanation and usage go to the [wiki](https://github.com/spcan/easy-complex/wiki)
+For extensive explanation and usage go to the [wiki](https://github.com/spcan/easy-complex/wiki) where the full usage is demonstrated
 
 To use the complex numbers do
 ```
-use easy_complex::{ExpComplex, NumComplex};
+use easy_complex::{EComplex, Complex};
 ```
 
 To use the explicit conversion do
@@ -48,10 +49,11 @@ use easy_complex::ContainedInComplex;
  >Warning!!! Values near zero may diverge in the argument if used in ExpComplex form
 
 ## TODO
- - Extend compatibility
- - Add more examples and tests
- - Some advanced functions on the complex domain (**C**)
- - Clean up and more extensive documentation
+ - [x] Extend compatibility
+ - [ ] Add more examples and tests
+ - [ ] Some advanced functions on the complex domain (**C**)
+ - [ ] Clean up and more extensive documentation
+ - [ ] Create a parser
 
 ## LICENSE
 Apache License 2.0
