@@ -35,12 +35,12 @@ Versions before 0.3.1 have some errors, misspells and/or overcomplicated ways, t
 For extensive explanation and usage go to the [wiki](https://github.com/spcan/easy-complex/wiki) where the full usage is demonstrated
 
 To use the complex numbers do
-```
+```rust
 use easy_complex::{EComplex, Complex};
 ```
 
 To use the explicit conversion do
-```
+```rust
 use easy_complex::ContainedInComplex;
 ```
 
