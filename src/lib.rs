@@ -1,6 +1,8 @@
 //!easy-complex crate
+//!
 //!Crate for easy to use complex numbers
-//!Only use of std library
+//!Needs the std library
+//!
 
 use std::ops::{Add, Mul, Neg, Sub, Div};
 use std::fmt;
@@ -15,126 +17,193 @@ extern crate num_complex;
 #[cfg(feature="num_complex_compatible")]
 use num_complex::Complex64;
 
-#[derive(Clone, Copy)]
-pub struct ExpComplex {
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn equality_check() {
+        assert!(Complex{real: 1.0, imag: 0.0} == EComplex{module: 1.0, arg: 0.0});
+    }
+
+    #[test]
+    fn casting_check() {
+        let cnum: Complex = 1.complex().into();
+        let ecnum = 1.complex();
+        assert!(cnum == ecnum);
+    }
+
+    #[test]
+    fn hyperbolic_trigonometry_check() {
+        let cnum = Complex::new();
+        let zero = Complex::new();
+        let one  = Complex {real: 1.0, imag: 0.0};
+        assert!(one  == cnum.cosh());
+        assert!(zero == cnum.sinh());
+        assert!(zero == cnum.tanh());
+    }
+
+    #[test]
+    fn trigonometry_check() {
+        let pifourth = Complex {real: pi()/4.0, imag: 0.0};
+        assert!((pifourth.cos() - pifourth.sin()).real <= 10.0f64.powi(-15));
+        assert!((pifourth.tan().unwrap() - Complex {real: 1.0, imag: 0.0}).real() <= 10.0f64.powi(-15));
+    }
+}
+
+/// Complex number in exponential form `(module * **_e_**^( i*argument ))`
+#[derive(Debug, Clone, Copy)]
+pub struct EComplex {
     pub arg: f64,
     pub module: f64,
 }
 
-#[derive(Clone, Copy)]
-pub struct NumComplex {
+/// Complex number in the usual form `(a + b*i)`
+#[derive(Debug, Clone, Copy)]
+pub struct Complex {
     pub real: f64,
     pub imag: f64,
 }
 
-pub trait Complex {}
+pub trait ComplexNumber {}
 
-impl Complex for NumComplex{}
-impl Complex for ExpComplex{}
+impl ComplexNumber for Complex{}
+impl ComplexNumber for EComplex{}
 
 
 pub trait ContainedInComplex {
-    fn complex(&self) -> ExpComplex;
+    fn complex(&self) -> EComplex;
 }
 
 fn pi() -> f64 {
     (-1.0f64).acos()
 }
 
-impl ExpComplex {
-    pub fn new() -> ExpComplex {
-        ExpComplex {module: 0.0, arg: 0.0}
+impl EComplex {
+    /// Create new EComplex equal to 0
+    pub fn new() -> EComplex {
+        EComplex {module: 0.0, arg: 0.0}
     }
 
-    pub fn new_from(f: &NumComplex) -> ExpComplex {
-        ExpComplex {module: f.module(), arg: f.arg()}
+    /// Create new EComplex equivalent to the input Complex
+    pub fn new_from(f: &Complex) -> EComplex {
+        EComplex {module: f.module(), arg: f.arg()}
     }
 
+    /// Return real part of the equivalent Complex
     pub fn real(&self) -> f64 {
         self.module*self.arg.cos()
     }
 
+    /// Return imaginary part of the equivalent Complex
     pub fn imag(&self) -> f64 {
         self.module*self.arg.sin()
     }
 
-    pub fn d_arg(&self) -> f64 {
+    /// Return the module
+    pub fn module(&self) -> f64 {
+        self.module
+    }
+
+    /// Return the argument in radians
+    pub fn arg(&mut self) -> f64 {
+        self.reduce_arg();
+        self.arg
+    }
+
+    /// Return the argument in degrees
+    pub fn argd(&self) -> f64 {
     	self.arg*360.0/(2.0*pi())
     }
 
+    /// Reduce the argument to a value between [0, 2*PI]
     pub fn reduce_arg(&mut self) {
     	self.arg = self.arg.cos().acos();
     }
 
-    pub fn sqrt(&self) -> Result<Vec<ExpComplex>, &'static str> {
+    /// Return a vector with the square roots
+    pub fn sqrt(&self) -> Result<Vec<EComplex>, &'static str> {
         self.root(2)
     }
 
-    pub fn root(&self, r: usize) -> Result<Vec<ExpComplex>, &'static str> {
+    /// Return a vector of `n` values with the `n`th roots
+    pub fn root(&self, r: usize) -> Result<Vec<EComplex>, &'static str> {
         if r < 1 {
             return Err("Illegal value for root");
         }
 
-        let mut out: Vec<ExpComplex> = vec![];
+        let mut out: Vec<EComplex> = vec![];
         let new_mod: f64 = self.module.powf(1.0f64/(r as f64));
         let pi: f64 = pi();
 
         for i in 0..r {
-            out.push(ExpComplex {module: new_mod,
+            out.push(EComplex {module: new_mod,
                                 arg: (self.arg + 2.0*pi*(i as f64)) / (r as f64)});
         }
         Ok(out)
     }
 
-    pub fn powi(&self, p: isize) -> ExpComplex {
-        ExpComplex {module: self.module.powi(p as i32),
+    /// Return the number raised to the power `p`
+    pub fn powi(&self, p: isize) -> EComplex {
+        EComplex {module: self.module.powi(p as i32),
                     arg: self.arg*(p as f64)}
     }
 
-    pub fn powf(&self, p: f64) -> ExpComplex {
-        ExpComplex {module: self.module.powf(p),
+    /// Return the number raised to the power `p`
+    pub fn powf(&self, p: f64) -> EComplex {
+        EComplex {module: self.module.powf(p),
                     arg: self.arg*p}
     }
 
-    pub fn conjugate(&self) -> ExpComplex {
-        ExpComplex {module: self.module, arg: -self.arg}
+    /// Return the conjugate EComplex
+    pub fn conjugate(&self) -> EComplex {
+        EComplex {module: self.module, arg: -self.arg}
     }
 
+    /// Return module
     pub fn abs(&self) -> f64 {
         self.module
     }
 
-    pub fn exp(&self) -> ExpComplex {
-        ExpComplex {module: self.module*self.arg.cos(), arg: self.module*self.arg.sin()}
+    /// Return `e^(self)`
+    pub fn exp(&self) -> EComplex {
+        EComplex {module: self.module*self.arg.cos(), arg: self.module*self.arg.sin()}
     }
 
-    pub fn ln(&self) -> ExpComplex {
-        ExpComplex::new_from(&NumComplex {real: self.module.ln(), imag: self.arg})
+    /// Return `ln(self)`
+    pub fn ln(&self) -> EComplex {
+        EComplex::new_from(&Complex {real: self.module.ln(), imag: self.arg})
     }
 
-    pub fn log(&self, base: f64) -> ExpComplex {
-        self.ln() / base.ln().complex()
+    /// Return `log(self)` in the base `b`
+    pub fn log(&self, b: f64) -> EComplex {
+        self.ln() / b.ln().complex()
     }
 
-    pub fn inverse(&self) -> ExpComplex {
-        ExpComplex {module: 1.0/self.module, arg: -self.arg}
+    /// Return `1/self`
+    pub fn inverse(&self) -> EComplex {
+        EComplex {module: 1.0/self.module, arg: -self.arg}
     }
 
-    pub fn cos(&self) -> ExpComplex {
-        ExpComplex::new_from(
-            &NumComplex {real:  self.real().cos()*self.imag().cosh(),
+    /// Return the cosine
+    pub fn cos(&self) -> EComplex {
+        EComplex::new_from(
+            &Complex {real:  self.real().cos()*self.imag().cosh(),
                         imag: -self.real().sin()*self.imag().sinh()}
         )
     }
 
-    pub fn sin(&self) -> ExpComplex {
-        ExpComplex::new_from(
-            &NumComplex {real: self.real().sin()*self.imag().cosh(),
+    /// Return the sine
+    pub fn sin(&self) -> EComplex {
+        EComplex::new_from(
+            &Complex {real: self.real().sin()*self.imag().cosh(),
                         imag: self.real().cos()*self.imag().sinh()}
         )
     }
 
-    pub fn tan(&self) -> Option<ExpComplex> {
+    /// Return the tangent
+    pub fn tan(&self) -> Option<EComplex> {
         let cosine = self.cos();
         if cosine.module != 0.0 {
             Some(self.sin()/cosine)
@@ -143,42 +212,64 @@ impl ExpComplex {
         }
     }
 
-    pub fn cosh(&self) -> ExpComplex {
-        ExpComplex::new_from(
-            &NumComplex {real: self.real().cosh()*self.imag().cos(),
+    /// Return the hyperolic cosine
+    pub fn cosh(&self) -> EComplex {
+        EComplex::new_from(
+            &Complex {real: self.real().cosh()*self.imag().cos(),
                         imag: self.real().sinh()*self.imag().sin()}
         )
     }
 
-    pub fn sinh(&self) -> ExpComplex {
-		ExpComplex::new_from(
-			&NumComplex {real: self.real().sinh()*self.imag().cos(),
+    /// Return the hyperbolic sine
+    pub fn sinh(&self) -> EComplex {
+		EComplex::new_from(
+			&Complex {real: self.real().sinh()*self.imag().cos(),
 						imag: self.real().cosh()*self.imag().sin()}
 		)
 	}
 
+    /// Return the hyperbolic tangent
+    pub fn tanh(&self) -> EComplex {
+        self.sinh() / self.cosh()
+    }
+
+    /// Return the module and argument as a tuple `(mod, arg)`
 	pub fn tuple(&self) -> (f64, f64) {
 		(self.module, self.arg)
 	}
 
-	pub fn coord_tuple(&self) -> (f64, f64) {
+    /// Return as a tuple the real and imaginary part of the equivalent Complex
+    /// (real, imag)
+	pub fn c_tuple(&self) -> (f64, f64) {
 		(self.real(), self.imag())
 	}
 }
 
-impl NumComplex {
-    pub fn new() -> NumComplex {
-        NumComplex {real: 0.0, imag: 0.0}
+impl Complex {
+    pub fn new() -> Complex {
+        Complex {real: 0.0, imag: 0.0}
     }
 
-    pub fn new_from(f: &ExpComplex) -> NumComplex {
-        NumComplex {real: f.real(), imag: f.imag()}
+    pub fn new_from(f: &EComplex) -> Complex {
+        Complex {real: f.real(), imag: f.imag()}
     }
 
+    /// Return real part
+    pub fn real(&self) -> f64 {
+        self.real
+    }
+
+    /// Return imaginary part
+    pub fn imag(&self) -> f64 {
+        self.imag
+    }
+
+    /// Return module of equivalent EComplex
     pub fn module(&self) -> f64 {
         (self.real*self.real + self.imag*self.imag).sqrt()
     }
 
+    /// Return argument of equivalent EComplex in radians
     pub fn arg(&self) -> f64 {
         if self.module() != 0.0{
             (self.real / self.module()).acos()
@@ -187,78 +278,91 @@ impl NumComplex {
         }
     }
 
-    pub fn d_arg(&self) -> f64 {
+    /// Return argument of equivalent EComplex in degrees
+    pub fn argd(&self) -> f64 {
     	self.arg()*360.0/(2.0*pi())
     }
 
-    pub fn sqrt(&self) -> Result<Vec<ExpComplex>, &'static str> {
+    /// Return vector of the two square roots
+    pub fn sqrt(&self) -> Result<Vec<EComplex>, &'static str> {
         self.root(2)
     }
 
-    pub fn root(&self, r: usize) -> Result<Vec<ExpComplex>, &'static str> {
+    /// Return vector of size `n` with the `n`th roots
+    pub fn root(&self, r: usize) -> Result<Vec<EComplex>, &'static str> {
         if r < 1 {
             return Err("Illegal value for root");
         }
 
-        let mut out: Vec<ExpComplex> = vec![];
+        let mut out: Vec<EComplex> = vec![];
         let new_mod: f64 = self.module().powf(1.0f64/(r as f64));
         let arg_k: f64 = self.arg();
         let pi = pi();
 
         for i in 0..r {
-            out.push(ExpComplex {module: new_mod, arg: (arg_k + 2.0*pi*(i as f64)) / (r as f64)});
+            out.push(EComplex {module: new_mod, arg: (arg_k + 2.0*pi*(i as f64)) / (r as f64)});
         }
         Ok(out)
     }
 
-    pub fn powi(&self, p: isize) -> NumComplex {
-        NumComplex {real: self.module().powi(p as i32)*(((p as f64)*self.arg()).cos()),
+    /// Return the number raised to the power `p`
+    pub fn powi(&self, p: isize) -> Complex {
+        Complex {real: self.module().powi(p as i32)*(((p as f64)*self.arg()).cos()),
                     imag: self.module().powi(p as i32)*(((p as f64)*self.arg()).sin())}
     }
-
-    pub fn powf(&self, p: f64) -> NumComplex {
-        NumComplex {real: self.module().powf(p)*((p*self.arg()).cos()),
+    /// Return the number raised to the power `p`
+    pub fn powf(&self, p: f64) -> Complex {
+        Complex {real: self.module().powf(p)*((p*self.arg()).cos()),
                     imag: self.module().powf(p)*((p*self.arg()).sin())}
     }
 
-    pub fn conjugate(&self) -> NumComplex {
-        NumComplex {real: self.real, imag: -self.imag}
+    /// Return the conjugate Complex
+    pub fn conjugate(&self) -> Complex {
+        Complex {real: self.real, imag: -self.imag}
     }
 
+    /// Return the module
     pub fn abs(&self) -> f64 {
         self.module()
     }
 
-    pub fn exp(&self) -> NumComplex {
-        NumComplex {real: self.imag.cos()*self.real.exp(), imag: self.imag.sin()*self.real.exp()}
+    /// Return `e^(self)`
+    pub fn exp(&self) -> Complex {
+        Complex {real: self.imag.cos()*self.real.exp(), imag: self.imag.sin()*self.real.exp()}
     }
 
-    pub fn ln(&self) -> NumComplex{
+    /// Return `ln(self)`
+    pub fn ln(&self) -> Complex{
         let othermod = (self.real*self.real + self.imag*self.imag).sqrt();
         let otherarg = (self.real / othermod).acos();
-        NumComplex {real: othermod.ln(), imag: otherarg}
+        Complex {real: othermod.ln(), imag: otherarg}
     }
 
-    pub fn log(&self, base: f64) -> NumComplex {
-        self.ln() / base.ln().complex()
+    /// Return `log(self)` in the base `b`
+    pub fn log(&self, b: f64) -> Complex {
+        self.ln() / b.ln().complex()
     }
 
-    pub fn inverse(&self) -> NumComplex {
-        NumComplex {real:  self.real / (self.real*self.real + self.imag+self.imag),
+    /// Return `1/self`
+    pub fn inverse(&self) -> Complex {
+        Complex {real:  self.real / (self.real*self.real + self.imag+self.imag),
                     imag: -self.imag / (self.real*self.real + self.imag*self.imag)}
     }
 
-    pub fn cos(&self) -> NumComplex {
-        NumComplex {real:  self.real.cos()*self.imag.cosh(),
+    /// Return the cosine
+    pub fn cos(&self) -> Complex {
+        Complex {real:  self.real.cos()*self.imag.cosh(),
                     imag: -self.real.sin()*self.imag.sinh()}
     }
 
-    pub fn sin(&self) -> NumComplex {
-        NumComplex {real: self.real.sin()*self.imag.cosh(),
+    /// Return the sine
+    pub fn sin(&self) -> Complex {
+        Complex {real: self.real.sin()*self.imag.cosh(),
                     imag: self.real.cos()*self.imag.sinh()}
     }
 
-    pub fn tan(&self) -> Option<NumComplex> {
+    /// Return the tangent
+    pub fn tan(&self) -> Option<Complex> {
         let cosine = self.cos();
         if cosine.real != 0.0 || cosine.imag != 0.0 {
             Some(self.sin()/cosine)
@@ -267,87 +371,97 @@ impl NumComplex {
         }
     }
 
-    pub fn cosh(&self) -> NumComplex {
-        NumComplex {real: self.real.cosh()*self.imag.cos(),
+    /// Return the hyperbolic cosine
+    pub fn cosh(&self) -> Complex {
+        Complex {real: self.real.cosh()*self.imag.cos(),
                     imag: self.real.sinh()*self.imag.sin()}
     }
 
-    pub fn sinh(&self) -> NumComplex {
-        NumComplex {real: self.real.sinh()*self.imag.cos(),
+    /// Return the hyperbolic sine
+    pub fn sinh(&self) -> Complex {
+        Complex {real: self.real.sinh()*self.imag.cos(),
                     imag: self.real.cosh()*self.imag.sin()}
     }
 
+    /// Return the hyperbolic tangent
+    pub fn tanh(&self) -> Complex {
+        Complex {real: self.real.tanh(), imag: self.imag.tan()} / Complex {real: 1.0, imag: self.real.tanh() * self.imag.tan()}
+    }
+
+    /// Return the real and imaginary parts as a tuple `(real, imag)`
 	pub fn tuple(&self) -> (f64, f64) {
 		(self.real, self.imag)
 	}
 
+    /// Return as a tuple the module and argument of the equivalent EComplex
+    /// (mod, arg)
 	pub fn exp_tuple(&self) -> (f64, f64) {
 		(self.module(), self.arg())
 	}
 }
 
 impl ContainedInComplex for u8 {
-    fn complex(&self) -> ExpComplex {
-        ExpComplex {module: (*self as f64), arg: 0.0}
+    fn complex(&self) -> EComplex {
+        EComplex {module: (*self as f64), arg: 0.0}
     }
 }
 
 impl ContainedInComplex for u16 {
-    fn complex(&self) -> ExpComplex {
-        ExpComplex {module: (*self as f64), arg: 0.0}
+    fn complex(&self) -> EComplex {
+        EComplex {module: (*self as f64), arg: 0.0}
     }
 }
 
 impl ContainedInComplex for u32 {
-    fn complex(&self) -> ExpComplex {
-        ExpComplex {module: (*self as f64), arg: 0.0}
+    fn complex(&self) -> EComplex {
+        EComplex {module: (*self as f64), arg: 0.0}
     }
 }
 
 impl ContainedInComplex for u64 {
-    fn complex(&self) -> ExpComplex {
-        ExpComplex {module: (*self as f64), arg: 0.0}
+    fn complex(&self) -> EComplex {
+        EComplex {module: (*self as f64), arg: 0.0}
     }
 }
 
 impl ContainedInComplex for i8 {
-    fn complex(&self) -> ExpComplex {
-        ExpComplex {module: (*self as f64), arg: 0.0}
+    fn complex(&self) -> EComplex {
+        EComplex {module: (*self as f64), arg: 0.0}
     }
 }
 
 impl ContainedInComplex for i16 {
-    fn complex(&self) -> ExpComplex {
-        ExpComplex {module: (*self as f64), arg: 0.0}
+    fn complex(&self) -> EComplex {
+        EComplex {module: (*self as f64), arg: 0.0}
     }
 }
 
 impl ContainedInComplex for i32 {
-    fn complex(&self) -> ExpComplex {
-        ExpComplex {module: (*self as f64), arg: 0.0}
+    fn complex(&self) -> EComplex {
+        EComplex {module: (*self as f64), arg: 0.0}
     }
 }
 
 impl ContainedInComplex for i64 {
-    fn complex(&self) -> ExpComplex {
-        ExpComplex {module: (*self as f64), arg: 0.0}
+    fn complex(&self) -> EComplex {
+        EComplex {module: (*self as f64), arg: 0.0}
     }
 }
 
 impl ContainedInComplex for f32 {
-    fn complex(&self) -> ExpComplex {
-        ExpComplex {module: (*self as f64), arg: 0.0}
+    fn complex(&self) -> EComplex {
+        EComplex {module: (*self as f64), arg: 0.0}
     }
 }
 
 impl ContainedInComplex for f64 {
-    fn complex(&self) -> ExpComplex {
-        ExpComplex {module: (*self as f64), arg: 0.0}
+    fn complex(&self) -> EComplex {
+        EComplex {module: (*self as f64), arg: 0.0}
     }
 }
 
 impl ContainedInComplex for (u8, u8) {
-    fn complex(&self) -> ExpComplex {
+    fn complex(&self) -> EComplex {
         let newmodule = ((self.0*self.0 + self.1*self.1) as f64).sqrt();
         let newarg = if self.0 != 0 {
             ((self.0 as f64)/newmodule).acos()
@@ -356,12 +470,12 @@ impl ContainedInComplex for (u8, u8) {
         } else {
             0.0f64
         };
-        ExpComplex {module: newmodule, arg: newarg}
+        EComplex {module: newmodule, arg: newarg}
     }
 }
 
 impl ContainedInComplex for (u16, u16) {
-    fn complex(&self) -> ExpComplex {
+    fn complex(&self) -> EComplex {
         let newmodule = ((self.0*self.0 + self.1*self.1) as f64).sqrt();
         let newarg = if self.0 != 0 {
             ((self.0 as f64)/newmodule).acos()
@@ -370,12 +484,12 @@ impl ContainedInComplex for (u16, u16) {
         } else {
             0.0f64
         };
-        ExpComplex {module: newmodule, arg: newarg}
+        EComplex {module: newmodule, arg: newarg}
     }
 }
 
 impl ContainedInComplex for (u32, u32) {
-    fn complex(&self) -> ExpComplex {
+    fn complex(&self) -> EComplex {
         let newmodule = ((self.0*self.0 + self.1*self.1) as f64).sqrt();
         let newarg = if self.0 != 0 {
             ((self.0 as f64)/newmodule).acos()
@@ -384,12 +498,12 @@ impl ContainedInComplex for (u32, u32) {
         } else {
             0.0f64
         };
-        ExpComplex {module: newmodule, arg: newarg}
+        EComplex {module: newmodule, arg: newarg}
     }
 }
 
 impl ContainedInComplex for (u64, u64) {
-    fn complex(&self) -> ExpComplex {
+    fn complex(&self) -> EComplex {
         let newmodule = ((self.0*self.0 + self.1*self.1) as f64).sqrt();
         let newarg = if self.0 != 0 {
             ((self.0 as f64)/newmodule).acos()
@@ -398,12 +512,12 @@ impl ContainedInComplex for (u64, u64) {
         } else {
             0.0f64
         };
-        ExpComplex {module: newmodule, arg: newarg}
+        EComplex {module: newmodule, arg: newarg}
     }
 }
 
 impl ContainedInComplex for (i8, i8) {
-    fn complex(&self) -> ExpComplex {
+    fn complex(&self) -> EComplex {
         let newmodule = ((self.0*self.0 + self.1*self.1) as f64).sqrt();
         let newarg = if self.0 != 0 {
             ((self.0 as f64)/newmodule).acos()
@@ -412,12 +526,12 @@ impl ContainedInComplex for (i8, i8) {
         } else {
             0.0f64
         };
-        ExpComplex {module: newmodule, arg: newarg}
+        EComplex {module: newmodule, arg: newarg}
     }
 }
 
 impl ContainedInComplex for (i16, i16) {
-    fn complex(&self) -> ExpComplex {
+    fn complex(&self) -> EComplex {
         let newmodule = ((self.0*self.0 + self.1*self.1) as f64).sqrt();
         let newarg = if self.0 != 0 {
             ((self.0 as f64)/newmodule).acos()
@@ -426,12 +540,12 @@ impl ContainedInComplex for (i16, i16) {
         } else {
             0.0f64
         };
-        ExpComplex {module: newmodule, arg: newarg}
+        EComplex {module: newmodule, arg: newarg}
     }
 }
 
 impl ContainedInComplex for (i32, i32) {
-    fn complex(&self) -> ExpComplex {
+    fn complex(&self) -> EComplex {
         let newmodule = ((self.0*self.0 + self.1*self.1) as f64).sqrt();
         let newarg = if self.0 != 0 {
             ((self.0 as f64)/newmodule).acos()
@@ -440,12 +554,12 @@ impl ContainedInComplex for (i32, i32) {
         } else {
             0.0f64
         };
-        ExpComplex {module: newmodule, arg: newarg}
+        EComplex {module: newmodule, arg: newarg}
     }
 }
 
 impl ContainedInComplex for (i64, i64) {
-    fn complex(&self) -> ExpComplex {
+    fn complex(&self) -> EComplex {
         let newmodule = ((self.0*self.0 + self.1*self.1) as f64).sqrt();
         let newarg = if self.0 != 0 {
             ((self.0 as f64)/newmodule).acos()
@@ -454,12 +568,12 @@ impl ContainedInComplex for (i64, i64) {
         } else {
             0.0f64
         };
-        ExpComplex {module: newmodule, arg: newarg}
+        EComplex {module: newmodule, arg: newarg}
     }
 }
 
 impl ContainedInComplex for (f32, f32) {
-    fn complex(&self) -> ExpComplex {
+    fn complex(&self) -> EComplex {
         let newmodule = ((self.0*self.0 + self.1*self.1) as f64).sqrt();
         let newarg = if self.0 != 0.0 {
             ((self.0 as f64)/newmodule).acos()
@@ -468,12 +582,12 @@ impl ContainedInComplex for (f32, f32) {
         } else {
             0.0f64
         };
-        ExpComplex {module: newmodule, arg: newarg}
+        EComplex {module: newmodule, arg: newarg}
     }
 }
 
 impl ContainedInComplex for (f64, f64) {
-    fn complex(&self) -> ExpComplex {
+    fn complex(&self) -> EComplex {
         let newmodule = (self.0*self.0 + self.1*self.1).sqrt();
         let newarg = if self.0 != 0.0 {
             ((self.0)/newmodule).acos()
@@ -482,99 +596,144 @@ impl ContainedInComplex for (f64, f64) {
         } else {
             0.0f64
         };
-        ExpComplex {module: newmodule, arg: newarg}
+        EComplex {module: newmodule, arg: newarg}
     }
 }
 
-impl From<ExpComplex> for NumComplex {
-    fn from(num: ExpComplex) -> Self {
-        NumComplex {real: num.real(), imag: num.imag()}
+impl From<EComplex> for Complex {
+    fn from(num: EComplex) -> Self {
+        Complex {real: num.real(), imag: num.imag()}
     }
 }
 
-impl From<NumComplex> for ExpComplex {
-    fn from(num: NumComplex) -> Self {
-        ExpComplex {module: num.module(), arg: num.arg()}
+impl From<Complex> for EComplex {
+    fn from(num: Complex) -> Self {
+        EComplex {module: num.module(), arg: num.arg()}
     }
 }
 
 #[cfg(feature="num_complex_compatible")]
-impl From<Complex64> for ExpComplex {
+impl From<Complex64> for EComplex {
     fn from(num: Complex64) -> Self {
-        ExpComplex::new_from(&NumComplex {real: num.re, imag: num.im})
+        EComplex::new_from(&Complex {real: num.re, imag: num.im})
     }
 }
 
 #[cfg(feature = "num_complex_compatible")]
-impl From<Complex64> for NumComplex {
+impl From<Complex64> for Complex {
     fn from(num: Complex64) -> Self {
-        NumComplex {real: num.re, imag: num.im}
+        Complex {real: num.re, imag: num.im}
     }
 }
 
 #[cfg(feature="num_complex_compatible")]
-impl From<ExpComplex> for Complex64 {
-    fn from(num: ExpComplex) -> Self {
+impl From<EComplex> for Complex64 {
+    fn from(num: EComplex) -> Self {
         Complex64::new(num.real(), num.imag())
     }
 }
 
 #[cfg(feature="num_complex_compatible")]
-impl From<NumComplex> for Complex64 {
-    fn from(num: NumComplex) -> Self {
+impl From<Complex> for Complex64 {
+    fn from(num: Complex) -> Self {
         Complex64::new(num.real, num.imag)
     }
 }
 
-impl fmt::Display for ExpComplex {
+impl fmt::Display for EComplex {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{} · exp({}j)", self.module, self.arg)
     }
 }
 
-impl fmt::Display for NumComplex {
+impl fmt::Display for Complex {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{} {} {}j", self.real, if self.imag >= 0.0 {"+"} else {"-"}, self.imag)
     }
 }
 pub fn euler_id() {
     let pi = (-1.0f64).acos();
-    let exp_number = ExpComplex {module: 1.0, arg: pi};
+    let exp_number = EComplex {module: 1.0, arg: pi};
     println!("Euler's identity: {} + 1 = {}", exp_number, exp_number + 1.complex());
 }
 
-impl PartialEq for ExpComplex {
-    fn eq(&self, other: &ExpComplex) -> bool {
-        if self.module == other.module {
-            return self.arg.cos() == other.arg.cos() && self.arg.sin() == other.arg.sin();
-        }
-        false
-    }
-
-    fn ne(&self, other: &ExpComplex) -> bool {
-        if self.module != other.module || self.arg.cos() != other.arg.cos() || self.arg.sin() != other.arg.sin() {
-            true
+impl PartialEq<Complex> for EComplex {
+    fn eq(&self, other: &Complex) -> bool {
+        if self.real() == other.real() {
+            self.imag() == other.imag()
         } else {
             false
         }
     }
+
+    fn ne(&self, other: &Complex) -> bool {
+        if self.real() != other.real() {
+            true
+        } else {
+            self.imag() != other.imag()
+        }
+    }
 }
 
-impl PartialEq for NumComplex {
-    fn eq(&self, other: &NumComplex) -> bool {
-        return self.real == other.real && self.imag == other.imag;
+impl PartialEq<EComplex> for Complex {
+    fn eq(&self, other: &EComplex) -> bool {
+        if self.real() == other.real() {
+            self.imag() == other.imag()
+        } else {
+            false
+        }
     }
 
-    fn ne(&self, other: &NumComplex) -> bool {
-        return !(self.real == other.real && self.imag == other.imag);
+    fn ne(&self, other: &EComplex) -> bool {
+        if self.real() != other.real() {
+            true
+        } else {
+            self.imag() != other.imag()
+        }
+    }
+}
+
+impl PartialEq for Complex {
+    fn eq(&self, other: &Complex) -> bool {
+        if self.real == other.real {
+            self.imag == other.imag
+        } else {
+            false
+        }
+    }
+
+    fn ne(&self, other: &Complex) -> bool {
+        if self.real != other.real {
+            true
+        } else {
+            self.imag != other.imag
+        }
+    }
+}
+
+impl PartialEq for EComplex {
+    fn eq(&self, other: &EComplex) -> bool {
+        if self.real() == other.real() {
+            self.imag() == other.imag()
+        } else {
+            false
+        }
+    }
+
+    fn ne(&self, other: &EComplex) -> bool {
+        if self.real() != other.real() {
+            true
+        } else {
+            self.imag() != other.imag()
+        }
     }
 }
 
 #[cfg(feature="nightly")]
-impl Zero for ExpComplex {
+impl Zero for EComplex {
     #[inline]
-    fn zero() -> ExpComplex {
-        ExpComplex {module: 0.0f64, arg: 0.0f64}
+    fn zero() -> EComplex {
+        EComplex {module: 0.0f64, arg: 0.0f64}
     }
 
     fn is_zero(&self) -> bool {
@@ -583,10 +742,10 @@ impl Zero for ExpComplex {
 }
 
 #[cfg(feature="nightly")]
-impl One for ExpComplex {
+impl One for EComplex {
     #[inline]
-    fn one() -> ExpComplex {
-        ExpComplex {module: 1.0f64, arg: 0.0f64}
+    fn one() -> EComplex {
+        EComplex {module: 1.0f64, arg: 0.0f64}
     }
 
     fn is_zero(&self) -> bool {
@@ -595,25 +754,25 @@ impl One for ExpComplex {
 }
 
 #[cfg(feature="nightly")]
-impl Zero for NumComplex {
+impl Zero for Complex {
     #[inline]
-    fn zero() -> NumComplex {
-        NumComplex {real: 0.0f64, imag: 0.0f64}
+    fn zero() -> Complex {
+        Complex {real: 0.0f64, imag: 0.0f64}
     }
 }
 
 #[cfg(feature="nightly")]
-impl One for NumComplex {
+impl One for Complex {
     #[inline]
-    fn one() -> NumComplex {
-        NumComplex {real: 1.0f64, imag: 0.0f64}
+    fn one() -> Complex {
+        Complex {real: 1.0f64, imag: 0.0f64}
     }
 }
 
-impl Add<ExpComplex> for ExpComplex {
-    type Output = ExpComplex;
+impl Add<EComplex> for EComplex {
+    type Output = EComplex;
 
-    fn add(self, other: ExpComplex) -> ExpComplex {
+    fn add(self, other: EComplex) -> EComplex {
         let newmodule = ((self.real() + other.real()).powi(2) + (self.imag() + other.imag()).powi(2)).sqrt();
         let newarg = if newmodule != 0.0 {
             ((self.real() + other.real())/newmodule).acos()
@@ -621,14 +780,14 @@ impl Add<ExpComplex> for ExpComplex {
             0.0
         };
 
-       ExpComplex {module: newmodule, arg: newarg}
+       EComplex {module: newmodule, arg: newarg}
     }
 }
 
-impl<'a, 'b> Add<&'b ExpComplex> for &'a ExpComplex {
-    type Output = ExpComplex;
+impl<'a, 'b> Add<&'b EComplex> for &'a EComplex {
+    type Output = EComplex;
 
-    fn add(self, other: &'b ExpComplex) -> ExpComplex {
+    fn add(self, other: &'b EComplex) -> EComplex {
         let newmodule = ((self.real() + other.real()).powi(2) + (self.imag() + other.imag()).powi(2)).sqrt();
         let newarg = if newmodule != 0.0 {
             ((self.real() + other.real())/newmodule).acos()
@@ -636,14 +795,14 @@ impl<'a, 'b> Add<&'b ExpComplex> for &'a ExpComplex {
             0.0
         };
 
-       ExpComplex {module: newmodule, arg: newarg}
+       EComplex {module: newmodule, arg: newarg}
     }
 }
 
-impl Add<NumComplex> for ExpComplex {
-    type Output = ExpComplex;
+impl Add<Complex> for EComplex {
+    type Output = EComplex;
 
-    fn add(self, other: NumComplex) -> ExpComplex {
+    fn add(self, other: Complex) -> EComplex {
         let newreal = self.real() + other.real;
         let newimag = self.imag() + other.imag;
 
@@ -653,14 +812,14 @@ impl Add<NumComplex> for ExpComplex {
         } else {
                 0.0
         };
-        ExpComplex {module: newmod, arg: newarg}
+        EComplex {module: newmod, arg: newarg}
     }
 }
 
-impl<'a, 'b> Add<&'b NumComplex> for &'a ExpComplex {
-    type Output = ExpComplex;
+impl<'a, 'b> Add<&'b Complex> for &'a EComplex {
+    type Output = EComplex;
 
-    fn add(self, other: &'b NumComplex) -> ExpComplex {
+    fn add(self, other: &'b Complex) -> EComplex {
         let newreal = self.real() + other.real;
         let newimag = self.imag() + other.imag;
 
@@ -670,278 +829,278 @@ impl<'a, 'b> Add<&'b NumComplex> for &'a ExpComplex {
         } else {
                 0.0
         };
-        ExpComplex {module: newmod, arg: newarg}
+        EComplex {module: newmod, arg: newarg}
     }
 }
 
-impl Add<NumComplex> for NumComplex {
-    type Output = NumComplex;
+impl Add<Complex> for Complex {
+    type Output = Complex;
 
-    fn add(self, other: NumComplex) -> NumComplex {
-        NumComplex {real: self.real + other.real, imag: self.imag + other.imag}
+    fn add(self, other: Complex) -> Complex {
+        Complex {real: self.real + other.real, imag: self.imag + other.imag}
     }
 }
 
-impl<'a, 'b> Add<&'b NumComplex> for &'a NumComplex {
-    type Output = NumComplex;
+impl<'a, 'b> Add<&'b Complex> for &'a Complex {
+    type Output = Complex;
 
-    fn add(self, other: &'b NumComplex) -> NumComplex {
-        NumComplex {real: self.real + other.real, imag: self.imag + other.imag}
+    fn add(self, other: &'b Complex) -> Complex {
+        Complex {real: self.real + other.real, imag: self.imag + other.imag}
     }
 }
 
-impl Add<ExpComplex> for NumComplex {
-    type Output = NumComplex;
+impl Add<EComplex> for Complex {
+    type Output = Complex;
 
-    fn add(self, other: ExpComplex) -> NumComplex {
-        NumComplex {real: self.real + other.module*other.arg.cos(), imag: self.imag + other.module*other.arg.sin()}
+    fn add(self, other: EComplex) -> Complex {
+        Complex {real: self.real + other.module*other.arg.cos(), imag: self.imag + other.module*other.arg.sin()}
     }
 }
 
-impl<'a, 'b> Add<&'b ExpComplex> for &'a NumComplex {
-    type Output = NumComplex;
+impl<'a, 'b> Add<&'b EComplex> for &'a Complex {
+    type Output = Complex;
 
-    fn add(self, other: &'b ExpComplex) -> NumComplex {
-        NumComplex {real: self.real + other.module*other.arg.cos(), imag: self.imag + other.module*other.arg.sin()}
+    fn add(self, other: &'b EComplex) -> Complex {
+        Complex {real: self.real + other.module*other.arg.cos(), imag: self.imag + other.module*other.arg.sin()}
     }
 }
 
-impl Neg for NumComplex {
-    type Output = NumComplex;
+impl Neg for Complex {
+    type Output = Complex;
 
-    fn neg(self) -> NumComplex {
-        NumComplex {real: -self.real, imag: -self.imag}
+    fn neg(self) -> Complex {
+        Complex {real: -self.real, imag: -self.imag}
     }
 }
 
-impl<'a> Neg for &'a NumComplex {
-    type Output = NumComplex;
+impl<'a> Neg for &'a Complex {
+    type Output = Complex;
 
-    fn neg(self) -> NumComplex {
-        NumComplex {real: -self.real, imag: -self.imag}
+    fn neg(self) -> Complex {
+        Complex {real: -self.real, imag: -self.imag}
     }
 }
 
-impl Neg for ExpComplex {
-    type Output = ExpComplex;
+impl Neg for EComplex {
+    type Output = EComplex;
 
-    fn neg(self) -> ExpComplex {
-        ExpComplex {module: self.module, arg: if self.arg > 0.0 {self.arg - pi()} else {self.arg + pi()}}
+    fn neg(self) -> EComplex {
+        EComplex {module: self.module, arg: if self.arg > 0.0 {self.arg - pi()} else {self.arg + pi()}}
     }
 }
 
-impl<'a> Neg for &'a ExpComplex {
-    type Output = ExpComplex;
+impl<'a> Neg for &'a EComplex {
+    type Output = EComplex;
 
-    fn neg(self) -> ExpComplex {
-        ExpComplex {module: self.module, arg: if self.arg > 0.0 {self.arg - pi()} else if self.arg < 0.0 {self.arg + pi()} else { pi()/2.0}}
+    fn neg(self) -> EComplex {
+        EComplex {module: self.module, arg: if self.arg > 0.0 {self.arg - pi()} else if self.arg < 0.0 {self.arg + pi()} else { pi()/2.0}}
     }
 }
 
-impl Sub<ExpComplex> for ExpComplex {
-    type Output = ExpComplex;
+impl Sub<EComplex> for EComplex {
+    type Output = EComplex;
 
-    fn sub(self, other: ExpComplex) -> ExpComplex {
+    fn sub(self, other: EComplex) -> EComplex {
         self + (-other)
     }
 }
 
-impl<'a, 'b> Sub<&'b ExpComplex> for &'a ExpComplex {
-    type Output = ExpComplex;
+impl<'a, 'b> Sub<&'b EComplex> for &'a EComplex {
+    type Output = EComplex;
 
-    fn sub(self, other: &'b ExpComplex) -> ExpComplex {
+    fn sub(self, other: &'b EComplex) -> EComplex {
         self + &(-other)
     }
 }
 
-impl Sub<NumComplex> for ExpComplex {
-    type Output = ExpComplex;
+impl Sub<Complex> for EComplex {
+    type Output = EComplex;
 
-    fn sub(self, other: NumComplex) -> ExpComplex {
+    fn sub(self, other: Complex) -> EComplex {
         self + (-other)
     }
 }
 
-impl<'a, 'b> Sub<&'b NumComplex> for &'a ExpComplex {
-    type Output = ExpComplex;
+impl<'a, 'b> Sub<&'b Complex> for &'a EComplex {
+    type Output = EComplex;
 
-    fn sub(self, other: &'b NumComplex) -> ExpComplex {
+    fn sub(self, other: &'b Complex) -> EComplex {
         self + &(-other)
     }
 }
 
-impl Sub<ExpComplex> for NumComplex {
-    type Output = NumComplex;
+impl Sub<EComplex> for Complex {
+    type Output = Complex;
 
-    fn sub(self, other: ExpComplex) -> NumComplex {
+    fn sub(self, other: EComplex) -> Complex {
         self + (-other)
     }
 }
 
-impl<'a, 'b> Sub<&'b ExpComplex> for &'a NumComplex {
-    type Output = NumComplex;
+impl<'a, 'b> Sub<&'b EComplex> for &'a Complex {
+    type Output = Complex;
 
-    fn sub(self, other: &'b ExpComplex) -> NumComplex {
+    fn sub(self, other: &'b EComplex) -> Complex {
         self + &(-other)
     }
 }
 
-impl Sub<NumComplex> for NumComplex {
-    type Output = NumComplex;
+impl Sub<Complex> for Complex {
+    type Output = Complex;
 
-    fn sub(self, other: NumComplex) -> NumComplex {
+    fn sub(self, other: Complex) -> Complex {
         self + (-other)
     }
 }
 
-impl<'a, 'b> Sub<&'b NumComplex> for &'a NumComplex {
-    type Output = NumComplex;
+impl<'a, 'b> Sub<&'b Complex> for &'a Complex {
+    type Output = Complex;
 
-    fn sub(self, other: &'b NumComplex) -> NumComplex {
+    fn sub(self, other: &'b Complex) -> Complex {
         self + &(-other)
     }
 }
 
-impl Mul<ExpComplex> for ExpComplex {
-    type Output = ExpComplex;
+impl Mul<EComplex> for EComplex {
+    type Output = EComplex;
 
-    fn mul(self, other: ExpComplex) -> ExpComplex {
-        ExpComplex {module: self.module * other.module, arg: self.arg + other.arg}
+    fn mul(self, other: EComplex) -> EComplex {
+        EComplex {module: self.module * other.module, arg: self.arg + other.arg}
     }
 }
 
-impl<'a, 'b> Mul<&'b ExpComplex> for &'a ExpComplex {
-    type Output = ExpComplex;
+impl<'a, 'b> Mul<&'b EComplex> for &'a EComplex {
+    type Output = EComplex;
 
-    fn mul(self, other: &'b ExpComplex) -> ExpComplex {
-        ExpComplex {module: self.module * other.module, arg: self.arg + other.arg}
+    fn mul(self, other: &'b EComplex) -> EComplex {
+        EComplex {module: self.module * other.module, arg: self.arg + other.arg}
     }
 }
 
-impl Mul<NumComplex> for ExpComplex {
-    type Output = ExpComplex;
+impl Mul<Complex> for EComplex {
+    type Output = EComplex;
 
-    fn mul(self, other: NumComplex) -> ExpComplex {
+    fn mul(self, other: Complex) -> EComplex {
         let othermod = other.module();
         let otherarg = other.module();
-        ExpComplex {module: self.module * othermod, arg: self.arg + otherarg}
+        EComplex {module: self.module * othermod, arg: self.arg + otherarg}
     }
 }
 
-impl<'a, 'b> Mul<&'b NumComplex> for &'a ExpComplex {
-    type Output = ExpComplex;
+impl<'a, 'b> Mul<&'b Complex> for &'a EComplex {
+    type Output = EComplex;
 
-    fn mul(self, other: &'b NumComplex) -> ExpComplex {
+    fn mul(self, other: &'b Complex) -> EComplex {
         let othermod = other.module();
         let otherarg = other.module();
-        ExpComplex {module: self.module * othermod, arg: self.arg + otherarg}
+        EComplex {module: self.module * othermod, arg: self.arg + otherarg}
     }
 }
 
-impl Mul<NumComplex> for NumComplex {
-    type Output = NumComplex;
+impl Mul<Complex> for Complex {
+    type Output = Complex;
 
-    fn mul(self, other: NumComplex) -> NumComplex {
-        NumComplex {real: self.real*other.real - self.imag*other.imag,
+    fn mul(self, other: Complex) -> Complex {
+        Complex {real: self.real*other.real - self.imag*other.imag,
                     imag: self.real*other.imag + self.imag*other.real}
     }
 }
 
-impl<'a, 'b> Mul<&'b NumComplex> for &'a NumComplex {
-    type Output = NumComplex;
+impl<'a, 'b> Mul<&'b Complex> for &'a Complex {
+    type Output = Complex;
 
-    fn mul(self, other: &'b NumComplex) -> NumComplex {
-        NumComplex {real: self.real*other.real - self.imag*other.imag,
+    fn mul(self, other: &'b Complex) -> Complex {
+        Complex {real: self.real*other.real - self.imag*other.imag,
                     imag: self.real*other.imag + self.imag*other.real}
     }
 }
 
-impl Mul<ExpComplex> for NumComplex {
-    type Output = NumComplex;
+impl Mul<EComplex> for Complex {
+    type Output = Complex;
 
-    fn mul(self, other: ExpComplex) -> NumComplex {
-        NumComplex {real: self.real*other.real() - self.imag*other.imag(),
+    fn mul(self, other: EComplex) -> Complex {
+        Complex {real: self.real*other.real() - self.imag*other.imag(),
                     imag: self.real*other.imag() + self.imag*other.real()}
     }
 }
 
-impl<'a, 'b> Mul<&'b ExpComplex> for &'a NumComplex {
-    type Output = NumComplex;
+impl<'a, 'b> Mul<&'b EComplex> for &'a Complex {
+    type Output = Complex;
 
-    fn mul(self, other: &'b ExpComplex) -> NumComplex {
-        NumComplex {real: self.real*other.real() - self.imag*other.imag(),
+    fn mul(self, other: &'b EComplex) -> Complex {
+        Complex {real: self.real*other.real() - self.imag*other.imag(),
                     imag: self.real*other.imag() + self.imag*other.real()}
     }
 }
 
-impl Div<ExpComplex> for ExpComplex {
-    type Output = ExpComplex;
+impl Div<EComplex> for EComplex {
+    type Output = EComplex;
 
-    fn div(self, other: ExpComplex) -> ExpComplex {
-        ExpComplex {module: self.module/other.module, arg: self.arg - other.arg}
+    fn div(self, other: EComplex) -> EComplex {
+        EComplex {module: self.module/other.module, arg: self.arg - other.arg}
     }
 }
 
-impl<'a, 'b> Div<&'b ExpComplex> for &'a ExpComplex {
-    type Output = ExpComplex;
+impl<'a, 'b> Div<&'b EComplex> for &'a EComplex {
+    type Output = EComplex;
 
-    fn div(self, other: &'b ExpComplex) -> ExpComplex {
-        ExpComplex {module: self.module/other.module, arg: self.arg - other.arg}
+    fn div(self, other: &'b EComplex) -> EComplex {
+        EComplex {module: self.module/other.module, arg: self.arg - other.arg}
     }
 }
 
-impl Div<NumComplex> for ExpComplex {
-    type Output = ExpComplex;
+impl Div<Complex> for EComplex {
+    type Output = EComplex;
 
-    fn div(self, other: NumComplex) -> ExpComplex {
+    fn div(self, other: Complex) -> EComplex {
         let othermod = other.module();
         let otherarg = other.arg();
-        ExpComplex {module: self.module/othermod, arg: self.arg - otherarg}
+        EComplex {module: self.module/othermod, arg: self.arg - otherarg}
     }
 }
 
-impl<'a, 'b> Div<&'b NumComplex> for &'a ExpComplex {
-    type Output = ExpComplex;
+impl<'a, 'b> Div<&'b Complex> for &'a EComplex {
+    type Output = EComplex;
 
-    fn div(self, other: &'b NumComplex) -> ExpComplex {
+    fn div(self, other: &'b Complex) -> EComplex {
         let othermod = other.module();
         let otherarg = other.arg();
-        ExpComplex {module: self.module/othermod, arg: self.arg - otherarg}
+        EComplex {module: self.module/othermod, arg: self.arg - otherarg}
     }
 }
 
-impl Div<NumComplex> for NumComplex {
-    type Output = NumComplex;
+impl Div<Complex> for Complex {
+    type Output = Complex;
 
-    fn div(self, other: NumComplex) -> NumComplex {
-        NumComplex {real: (self.real*other.real + self.imag*other.imag) / (other.real*other.real + other.imag*other.imag),
+    fn div(self, other: Complex) -> Complex {
+        Complex {real: (self.real*other.real + self.imag*other.imag) / (other.real*other.real + other.imag*other.imag),
                     imag: (self.imag*other.imag - self.real*other.imag) / (other.real*other.real + other.imag*other.imag)}
     }
 }
 
-impl<'a, 'b> Div<&'b NumComplex> for &'a NumComplex {
-    type Output = NumComplex;
+impl<'a, 'b> Div<&'b Complex> for &'a Complex {
+    type Output = Complex;
 
-    fn div(self, other: &'b NumComplex) -> NumComplex {
-        NumComplex {real: (self.real*other.real + self.imag*other.imag) / (other.real*other.real + other.imag*other.imag),
+    fn div(self, other: &'b Complex) -> Complex {
+        Complex {real: (self.real*other.real + self.imag*other.imag) / (other.real*other.real + other.imag*other.imag),
                     imag: (self.imag*other.imag - self.real*other.imag) / (other.real*other.real + other.imag*other.imag)}
     }
 }
 
-impl Div<ExpComplex> for NumComplex {
-    type Output = NumComplex;
+impl Div<EComplex> for Complex {
+    type Output = Complex;
 
-    fn div(self, other: ExpComplex) -> NumComplex {
-        NumComplex {real: (self.real*other.real() + self.imag*other.imag()) / (other.real()*other.real() + other.imag()*other.imag()),
+    fn div(self, other: EComplex) -> Complex {
+        Complex {real: (self.real*other.real() + self.imag*other.imag()) / (other.real()*other.real() + other.imag()*other.imag()),
                     imag: (self.imag*other.imag() - self.real*other.imag()) / (other.real()*other.real() + other.imag()*other.imag())}
     }
 }
 
-impl<'a, 'b> Div<&'b ExpComplex> for &'a NumComplex {
-    type Output = NumComplex;
+impl<'a, 'b> Div<&'b EComplex> for &'a Complex {
+    type Output = Complex;
 
-    fn div(self, other: &'b ExpComplex) -> NumComplex {
-        NumComplex {real: (self.real*other.real() + self.imag*other.imag()) / (other.real()*other.real() + other.imag()*other.imag()),
+    fn div(self, other: &'b EComplex) -> Complex {
+        Complex {real: (self.real*other.real() + self.imag*other.imag()) / (other.real()*other.real() + other.imag()*other.imag()),
                     imag: (self.imag*other.imag() - self.real*other.imag()) / (other.real()*other.real() + other.imag()*other.imag())}
     }
 }
