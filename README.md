@@ -1,7 +1,7 @@
 # easy-complex
-[![Github build](https://img.shields.io/badge/build-passing-brightgreen.svg)]()
-[![GitHub package version](https://img.shields.io/crates/v/easy_complex.svg)](https://crates.io/crates/easy_complex)
-[![Github license](https://img.shields.io/badge/license-apache-blue.svg)](https://github.com/spcan/easy-complex/blob/master/LICENSE)
+[![Github build](https://img.shields.io/badge/build-passing-brightgreen.svg?style=flat-square)]()
+[![GitHub package version](https://img.shields.io/crates/v/easy_complex.svg?style=flat-square)](https://crates.io/crates/easy_complex)
+[![Github license](https://img.shields.io/badge/license-apache-blue.svg?style=flat-square)](https://github.com/spcan/easy-complex/blob/master/LICENSE)
 
 easy-complex is a no-dependencies crate that provides easy to use complex number operations and provides an explicit cast for all numeric types in the standard library.
 
