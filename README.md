@@ -1,7 +1,8 @@
 # easy-complex
 [![Github build](https://img.shields.io/badge/build-passing-brightgreen.svg?style=flat-square)]()
 [![GitHub package version](https://img.shields.io/crates/v/easy_complex.svg?style=flat-square)](https://crates.io/crates/easy_complex)
-[![Github license](https://img.shields.io/badge/license-apache-blue.svg?style=flat-square)](https://github.com/spcan/easy-complex/blob/master/LICENSE)
+[![Github license](https://img.shields.io/badge/license-apache-blue.svg?style=flat-square)](https://github.com/spcan/easy-complex/blob/master/LICENSE-APACHE)
+[![Github license](https://img.shields.io/badge/license-mit-blue.svg?style=flat-square)](https://github.com/spcan/easy-complex/blob/master/LICENSE-MIT)
 
 easy-complex is a no-dependencies crate that provides easy to use complex number operations and provides an explicit cast for all numeric types in the standard library.
 
@@ -13,7 +14,7 @@ If you have any issues, please report them [here](https://github.com/spcan/easy-
 
 ## Features
 
-  - Explicit cast from integers, unsigned integers and floats to Exponential Complex Number (ExpComplex).
+  - Explicit cast from integers, unsigned integers and floats to Rectangular (Complex) and Exponential (EComplex) Complex Number.
   - Easy operations with overloaded standard operators.
   - A custom Display trait implementation that prints in either exponential form or coordinate form.
   - Compatibility with the num-traits crate through the feature "num_complex\_compatibility".
@@ -24,7 +25,7 @@ Just add to your ```Cargo.toml```
 
 ```
 [dependencies]
-easy_complex = "0.3.4"
+easy_complex = "0.4.0"
 ```
 If you don't use or want to use cargo, the crate can be found in this [crates.io](https://crates.io/crates/easy_complex) page
 
@@ -32,7 +33,7 @@ If you don't use or want to use cargo, the crate can be found in this [crates.io
 ## Usage
 For extensive explanation and usage go to the [wiki](https://github.com/spcan/easy-complex/wiki) where the full usage is demonstrated
 
-Add to your cret root:
+Add to your crate root:
 ```
 extern crate easy_complex;
 ```
@@ -40,11 +41,11 @@ extern crate easy_complex;
 ## TODO
  - [x] Extend compatibility
  - [ ] Add more examples and tests
- - [ ] Some advanced functions on the complex domain (**C**)
- - [ ] Clean up and more extensive documentation
+ - [x] Some advanced functions on the complex domain (**C**)
+ - [x] Clean up and more extensive documentation
  - [ ] Create a parser
 
 ## LICENSE
-Apache License 2.0
+Dual licensed under Apache 2.0 and MIT licenses
 
 
