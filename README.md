@@ -28,25 +28,14 @@ easy_complex = "0.3.4"
 ```
 If you don't use or want to use cargo, the crate can be found in this [crates.io](https://crates.io/crates/easy_complex) page
 
-Versions before 0.3.1 have some errors, misspells and/or overcomplicated ways, their use is not recommended.
-
 
 ## Usage
 For extensive explanation and usage go to the [wiki](https://github.com/spcan/easy-complex/wiki) where the full usage is demonstrated
 
-To use the complex numbers do
-```rust
-use easy_complex::{EComplex, Complex};
+Add to your cret root:
 ```
-
-To use the explicit conversion do
-```rust
-use easy_complex::ContainedInComplex;
+extern crate easy_complex;
 ```
-
- >This is based on the Real domain, which is contained within the Complex domain in Math
-
- >Warning!!! Values near zero may diverge in the argument if used in ExpComplex form
 
 ## TODO
  - [x] Extend compatibility

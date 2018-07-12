@@ -10,6 +10,7 @@ repository = "https://github.com/spcan/easy-complex"
 
 [dependencies]
 
+
 [profile.dev]
 opt-level = 2
 debug = true
@@ -35,6 +36,7 @@ lto = false
 debug-assertions = true
 codegen-units = 1
 panic = 'unwind'
+
 
 [profile.bench]
 opt-level = 3
