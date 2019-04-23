@@ -1,15 +1,17 @@
 [package]
 name = "easy_complex"
-version = "0.3.4"
+version = "0.4.1"
 authors = ["spcan <agrc14@gmail.com>"]
 description = "Complex numbers crate"
-license = "Apache-2.0"
+license = "MIT"
 keywords = ["complex", "numbers", "math", "mathematics"]
 readme = "README.md"
 repository = "https://github.com/spcan/easy-complex"
 
+
 [dependencies]
 
+[features]
 
 [profile.dev]
 opt-level = 2
